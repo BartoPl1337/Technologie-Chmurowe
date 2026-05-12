@@ -56,6 +56,17 @@ function showApp() {
 }
 
 function showAuth() {
+  // zawsze wracaj do trybu logowania przy wylogowaniu / wygaśnięciu sesji
+  if (isRegisterMode) {
+    isRegisterMode = false;
+    authTitle.textContent = 'Logowanie';
+    authSubmit.textContent = 'Zaloguj';
+    authToggleText.textContent = 'Nie masz konta?';
+    authToggleLink.textContent = 'Zarejestruj się';
+  }
+  authError.textContent = '';
+  authUsername.value = '';
+  authPassword.value = '';
   authSection.style.display = 'block';
   notesSection.style.display = 'none';
   userInfo.style.display = 'none';

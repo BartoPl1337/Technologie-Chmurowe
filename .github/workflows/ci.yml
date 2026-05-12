@@ -1,0 +1,104 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── 1. Testy jednostkowe
+  unit-tests:
+    name: Unit Tests (Jest)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Instalacja zależności backendu
+        run: npm install
+        working-directory: backend
+
+      - name: Uruchomienie testów jednostkowych
+        run: npm test
+        working-directory: backend
+
+  # ── 2. Testy e2e
+  e2e-tests:
+    name: E2E Tests (Playwright)
+    runs-on: ubuntu-latest
+    needs: unit-tests
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Instalacja zależności Playwright
+        run: npm install
+
+      - name: Instalacja przeglądarki Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Przygotowanie pliku .env
+        run: |
+          cat > .env << 'EOF'
+          POSTGRES_USER=notesapp
+          POSTGRES_PASSWORD=notespass
+          POSTGRES_DB=notesdb
+          JWT_SECRET=ci-test-secret-do-not-use-in-prod
+          EOF
+
+      - name: Uruchomienie docker compose
+        run: docker compose up -d --build
+
+      - name: Oczekiwanie na gotowość aplikacji (maks. 90s)
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sk https://localhost/api/health | grep -q '"ok"'; then
+              echo "Aplikacja gotowa po $((i * 3))s"
+              exit 0
+            fi
+            echo "Próba $i/30 — czekam 3s..."
+            sleep 3
+          done
+          echo "Aplikacja nie wystartowała w czasie 90s" >&2
+          docker compose logs
+          exit 1
+
+      - name: Uruchomienie testów e2e
+        run: npx playwright test
+
+      - name: Logi kontenerów (zawsze)
+        if: always()
+        run: docker compose logs --no-color > docker-compose-logs.txt
+
+      - name: Upload logów Docker
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-logs
+          path: docker-compose-logs.txt
+          retention-days: 7
+
+      - name: Upload raportu Playwright
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+      - name: Czyszczenie (zawsze)
+        if: always()
+        run: docker compose down -v

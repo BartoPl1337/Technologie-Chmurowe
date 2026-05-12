@@ -3,3 +3,4 @@ node_modules/
 proxy/certs/*.pem
 proxy/certs/*.crt
 proxy/certs/*.key
+.claude/
