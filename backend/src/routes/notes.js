@@ -13,14 +13,14 @@ router.get('/', async (req, res) => {
     res.json(rows);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Błąd serwera' });
   }
 });
 
 router.post('/', async (req, res) => {
   const { title, content = '' } = req.body;
   if (!title || title.trim() === '') {
-    return res.status(400).json({ error: 'title is required' });
+    return res.status(400).json({ error: 'tytuł jest wymagany' });
   }
   try {
     const { rows } = await db.query(
@@ -30,14 +30,14 @@ router.post('/', async (req, res) => {
     res.status(201).json(rows[0]);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Błąd serwera' });
   }
 });
 
 router.put('/:id', async (req, res) => {
   const { title, content } = req.body;
   if (!title || title.trim() === '') {
-    return res.status(400).json({ error: 'title is required' });
+    return res.status(400).json({ error: 'tytuł jest wymagany' });
   }
   try {
     const { rows } = await db.query(
@@ -45,12 +45,12 @@ router.put('/:id', async (req, res) => {
       [title.trim(), content ?? '', req.params.id, req.user.userId]
     );
     if (rows.length === 0) {
-      return res.status(404).json({ error: 'Note not found' });
+      return res.status(404).json({ error: 'Notatka nie znaleziona' });
     }
     res.json(rows[0]);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Błąd serwera' });
   }
 });
 
@@ -61,12 +61,12 @@ router.delete('/:id', async (req, res) => {
       [req.params.id, req.user.userId]
     );
     if (rowCount === 0) {
-      return res.status(404).json({ error: 'Note not found' });
+      return res.status(404).json({ error: 'Notatka nie znaleziona' });
     }
     res.status(204).end();
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Błąd serwera' });
   }
 });
 

@@ -3,7 +3,7 @@ const { Pool } = require('pg');
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 pool.on('error', (err) => {
-  console.error('Unexpected DB error', err);
+  console.error('błąd bazy danych', err);
 });
 
 module.exports = {
