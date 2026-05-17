@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "test": "npm test --prefix backend",
     "test:e2e": "playwright test"
   },
   "devDependencies": {
